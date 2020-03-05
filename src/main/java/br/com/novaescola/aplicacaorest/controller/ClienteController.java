@@ -1,6 +1,7 @@
 package br.com.novaescola.aplicacaorest.controller;
 
 import java.net.URI;
+import java.util.List;
 
 import javax.validation.Valid;
 
@@ -18,10 +19,17 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
 import br.com.novaescola.aplicacaorest.dto.ClienteDTO;
+import br.com.novaescola.aplicacaorest.dto.ClienteListaDTO;
 import br.com.novaescola.aplicacaorest.entity.Cliente;
+import br.com.novaescola.aplicacaorest.exception.ClienteNomeDuplicadoException;
 import br.com.novaescola.aplicacaorest.response.Response;
 import br.com.novaescola.aplicacaorest.service.ClienteService;
 
+/**
+ * 
+ * @author Uirá Haun de Oliveira
+ *
+ */
 @RestController
 public class ClienteController {
 
@@ -35,24 +43,18 @@ public class ClienteController {
 	 * Método para salvar um novo cliente.
 	 * @param novoCliente
 	 * @return Cliente (novo com id)
+	 * @throws ClienteNomeDuplicadoException 
 	 */
 	@RequestMapping(value = "/cliente", method = RequestMethod.POST)
-	public ResponseEntity<Response<Cliente>> salvarCliente(@Valid @RequestBody ClienteDTO cliente, BindingResult result) {
-		Response<Cliente> response = new Response<Cliente>();
+	public ResponseEntity<Cliente> salvarCliente(@Valid @RequestBody ClienteDTO cliente, BindingResult result) throws ClienteNomeDuplicadoException {
+		Cliente clienteNovo = new Cliente(cliente.getNome(), cliente.getEmail(), cliente.getDataDeNascimento());
 
-		if (result.hasErrors()) {
-			result.getAllErrors().forEach(error -> response.getErrors().add(error.getDefaultMessage()));
-			return ResponseEntity.badRequest().body(response);
-		}
-
-		Cliente clienteSalvo = clienteService.salvar(cliente);
+		Cliente clienteSalvo = clienteService.salvar(clienteNovo);
 
 		URI location = ServletUriComponentsBuilder.fromCurrentRequest().path("/{id}").buildAndExpand(cliente.getId())
 				.toUri();
 
-		response.setData(clienteSalvo);
-
-		return ResponseEntity.created(location).body(response);
+		return new ResponseEntity<Cliente>(clienteSalvo,HttpStatus.CREATED);
 	}
 
 	/**
@@ -62,10 +64,18 @@ public class ClienteController {
      * @return Lista de clientes
 	 */
 	@RequestMapping(value = "/cliente", method = RequestMethod.GET)
-	public Page<Cliente> obterClientes(@RequestParam(value = "pagina", required = false, defaultValue = "0") int pagina,
+	public ResponseEntity<ClienteListaDTO> obterClientes(@RequestParam(value = "pagina", required = false, defaultValue = "0") int pagina,
 			@RequestParam(value = "limite", required = false, defaultValue = "10") int limite) {
 			
-		return clienteService.findAll(pagina, limite);
+		Page<Cliente> page = clienteService.findAll(pagina, limite);
+		
+		List<Cliente> lista = page.getContent();
+		
+		ClienteListaDTO clienteRetorno = new ClienteListaDTO();
+		clienteRetorno.setLista(lista);
+		clienteRetorno.setTotal(page.getTotalElements());
+		
+		return new ResponseEntity<ClienteListaDTO>(clienteRetorno, HttpStatus.OK);
 	}
 
 	/**
@@ -74,22 +84,10 @@ public class ClienteController {
 	 * @return Cliente
 	 */
 	@RequestMapping(value = "/cliente/{id}", method = RequestMethod.GET)
-	public ResponseEntity<Response<Cliente>> obterClientePorId(@PathVariable(value = "id") long id) {
-		Response<Cliente> response = new Response<Cliente>();
-		
+	public ResponseEntity<Cliente> obterClientePorId(@PathVariable(value = "id") long id) {
 		ResponseEntity<Cliente> clienteExiste = clienteService.findById(id);
 		
-		if(HttpStatus.NOT_FOUND.equals(clienteExiste.getStatusCode())) {
-			response.getErrors().add("Cliente com id ["+id+"] não encontrado!");
-			return ResponseEntity.badRequest().body(response);
-		}
-		
-		URI location = ServletUriComponentsBuilder.fromCurrentRequest().path("/{id}").buildAndExpand(clienteExiste.getBody().getId())
-				.toUri();
-
-		response.setData(clienteExiste.getBody());
-
-		return ResponseEntity.created(location).body(response); 
+		return new ResponseEntity<Cliente>(clienteExiste.getBody(), HttpStatus.OK); 
 	}
 
 	/**
@@ -99,25 +97,17 @@ public class ClienteController {
 	 * @return Cliente - Entidade alterada
 	 */
 	@RequestMapping(value = "/cliente/{id}", method = RequestMethod.PUT)
-	public ResponseEntity<Response<Cliente>> alterarCliente(@PathVariable(value = "id") long id,
+	public ResponseEntity<Cliente> alterarCliente(@PathVariable(value = "id") long id,
 			@Valid @RequestBody Cliente clienteAlter) {
-		Response<Cliente> response = new Response<Cliente>();
-
 		ResponseEntity<Cliente> clienteExiste = clienteService.findById(id);
 		
-		if(HttpStatus.NOT_FOUND.equals(clienteExiste.getStatusCode())) {
-			response.getErrors().add("Cliente com id ["+id+"] não encontrado!");
-			return ResponseEntity.badRequest().body(response);
+		if(clienteExiste.getStatusCode().equals(HttpStatus.NOT_FOUND)) {
+			return clienteExiste;
 		}
+		
+		Cliente cliente = clienteService.alterarCliente(clienteExiste.getBody(), clienteAlter);
 
-		ResponseEntity<Cliente> cliente = clienteService.alterarCliente(clienteExiste.getBody(), clienteAlter);
-
-		URI location = ServletUriComponentsBuilder.fromCurrentRequest().path("/{id}").buildAndExpand(cliente.getBody().getId())
-				.toUri();
-
-		response.setData(cliente.getBody());
-
-		return ResponseEntity.created(location).body(response);
+		return new ResponseEntity(cliente, HttpStatus.OK);
 	}
 
 	/**
@@ -138,4 +128,5 @@ public class ClienteController {
 
 		return clienteService.removerCliente(id);
 	}
+	
 }

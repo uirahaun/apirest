@@ -3,6 +3,12 @@ package br.com.novaescola.aplicacaorest.response;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * 
+ * @author Uirá Haun de Oliveira
+ *
+ * @param <T>
+ */
 public class Response<T> {
 
 	private T data;

@@ -14,6 +14,11 @@ import org.springframework.stereotype.Component;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
 
+/**
+ * 
+ * @author Uirá Haun de Oliveira
+ *
+ */
 @Entity
 @Component
 @DynamicUpdate
@@ -22,7 +27,7 @@ public class Cliente implements Serializable {
 	private static final long serialVersionUID = 3478044542492478451L;
 
 	@Id
-    @GeneratedValue(strategy = GenerationType.AUTO)
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
 	private Long id;
 	
 	@Column(nullable = false)
@@ -41,6 +46,14 @@ public class Cliente implements Serializable {
 	public Cliente(Long id) {
 		super();
 		this.id = id;
+	}
+	
+	public Cliente(Long id, String nome, String email, Date dataDeNascimento) {
+		super();
+		this.id = id;
+		this.nome = nome;
+		this.email = email;
+		this.dataDeNascimento = dataDeNascimento;
 	}
 
 	public Cliente(String nome, String email, Date dataDeNascimento) {

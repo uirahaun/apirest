@@ -10,20 +10,35 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 
-import br.com.novaescola.aplicacaorest.dto.ClienteDTO;
 import br.com.novaescola.aplicacaorest.entity.Cliente;
+import br.com.novaescola.aplicacaorest.exception.ClienteNomeDuplicadoException;
 import br.com.novaescola.aplicacaorest.repository.ClienteRepository;
 
+/**
+ * 
+ * @author Uirá Haun de Oliveira
+ *
+ */
 @Service
 public class ClienteService {
 
 	@Autowired
 	public ClienteRepository clienteRepository;
 	
-	public Cliente salvar(ClienteDTO novoCliente) {
-		Cliente cliente = new Cliente(novoCliente.getNome(), novoCliente.getEmail(), novoCliente.getDataDeNascimento());
+	public ClienteService(ClienteRepository clienteRepository) {
+		super();
+		this.clienteRepository = clienteRepository;
+	}
+
+	public Cliente salvar(Cliente novoCliente) throws ClienteNomeDuplicadoException {
 		
-		return clienteRepository.save(cliente);
+		Optional<Cliente> optional = clienteRepository.findByNome(novoCliente.getNome());
+		
+		if( optional.isPresent() ) {
+            throw new ClienteNomeDuplicadoException("Já existe cliente cadastrado com o nome '"+novoCliente.getNome()+"'");
+        }
+		
+		return clienteRepository.save(novoCliente);
 	}
 
 	public ResponseEntity<Cliente> findById(long id) {
@@ -42,26 +57,22 @@ public class ClienteService {
 		return clienteRepository.findAll(pageRequest);
 	}
 
-	public ResponseEntity<Cliente> alterarCliente(Cliente clienteExistente, Cliente clienteAlter) {
-		if (clienteExistente != null) {
-			if(!StringUtils.isEmpty(clienteAlter.getNome()) && !clienteAlter.getNome().equalsIgnoreCase(clienteExistente.getNome())) {
-				clienteExistente.setNome(clienteAlter.getNome());
-			}
-			
-			if(clienteAlter.getDataDeNascimento() != null && !clienteAlter.getDataDeNascimento().equals(clienteExistente.getDataDeNascimento())) {
-				clienteExistente.setDataDeNascimento(clienteAlter.getDataDeNascimento());
-			}
-			
-			if(!StringUtils.isEmpty(clienteAlter.getEmail()) && !clienteAlter.getEmail().equalsIgnoreCase(clienteExistente.getEmail())) {
-				clienteExistente.setEmail(clienteAlter.getEmail());
-			}
-
-			clienteRepository.save(clienteExistente);
-
-			return new ResponseEntity<Cliente>(clienteExistente, HttpStatus.OK);
+	public Cliente alterarCliente(Cliente clienteExistente, Cliente clienteAlter) {
+		if(!StringUtils.isEmpty(clienteAlter.getNome()) && !clienteAlter.getNome().equalsIgnoreCase(clienteExistente.getNome())) {
+			clienteExistente.setNome(clienteAlter.getNome());
+		}
+		
+		if(clienteAlter.getDataDeNascimento() != null && !clienteAlter.getDataDeNascimento().equals(clienteExistente.getDataDeNascimento())) {
+			clienteExistente.setDataDeNascimento(clienteAlter.getDataDeNascimento());
+		}
+		
+		if(!StringUtils.isEmpty(clienteAlter.getEmail()) && !clienteAlter.getEmail().equalsIgnoreCase(clienteExistente.getEmail())) {
+			clienteExistente.setEmail(clienteAlter.getEmail());
 		}
 
-		return new ResponseEntity<Cliente>(HttpStatus.NOT_FOUND);
+		clienteRepository.save(clienteExistente);
+
+		return clienteExistente;
 	}
 
 	public ResponseEntity<Object> removerCliente(long id) {
@@ -75,4 +86,5 @@ public class ClienteService {
 
 		return new ResponseEntity<>(HttpStatus.NOT_FOUND);
 	}
+	
 }

@@ -9,6 +9,11 @@ import javax.validation.constraints.NotNull;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import com.fasterxml.jackson.databind.ser.std.DateSerializer;
 
+/**
+ * 
+ * @author Uirá Haun de Oliveira
+ *
+ */
 public class ClienteDTO implements Serializable {
 
 	private static final long serialVersionUID = 84258995029281724L;
