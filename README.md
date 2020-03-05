@@ -8,8 +8,9 @@ Projeto Cadastro Cliente - CRUD API REST
 - JPA
 - Hibernate
 - Maven
-- Docker
-- Mysql
+- Rest Assure
+- JUnit
+- HSQLDB
 
 # Detalhes do Projeto
 O Projeto consiste em uma aplicação REST para cadastro de Cliente (CRUD)
@@ -146,3 +147,8 @@ Corpo: _vazio_
 Resposta: _vazio_
 
     Código da resposta: 200
+
+# Testes Realizados
+1) Testes na camada Repository
+2) Testes na camada Service
+3) Testes nos métodos HTTP (GET, PUT, POST)
