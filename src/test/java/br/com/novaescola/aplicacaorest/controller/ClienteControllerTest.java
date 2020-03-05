@@ -91,4 +91,21 @@ public class ClienteControllerTest extends ApiRestApplicationTests {
 			.and()
 				.statusCode(HttpStatus.NOT_FOUND.value());
 	}
+	
+	@Test
+	public void testDeleteCliente() throws Exception {
+		given()
+			.pathParam("id", 9)
+			.request()
+			.header("Accept", ContentType.ANY)
+			.header("Content-type", ContentType.JSON)
+		.when()
+		.delete("/cliente/{id}")
+		.then()
+			.log().headers()
+			.and()
+			.log().body()
+			.and()
+				.statusCode(HttpStatus.OK.value());
+	}
 }

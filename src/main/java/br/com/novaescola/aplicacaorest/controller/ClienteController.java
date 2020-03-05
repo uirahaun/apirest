@@ -1,6 +1,5 @@
 package br.com.novaescola.aplicacaorest.controller;
 
-import java.net.URI;
 import java.util.List;
 
 import javax.validation.Valid;
@@ -16,13 +15,12 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
-import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
 import br.com.novaescola.aplicacaorest.dto.ClienteDTO;
 import br.com.novaescola.aplicacaorest.dto.ClienteListaDTO;
 import br.com.novaescola.aplicacaorest.entity.Cliente;
+import br.com.novaescola.aplicacaorest.exception.ClienteNaoEncontradoException;
 import br.com.novaescola.aplicacaorest.exception.ClienteNomeDuplicadoException;
-import br.com.novaescola.aplicacaorest.response.Response;
 import br.com.novaescola.aplicacaorest.service.ClienteService;
 
 /**
@@ -35,9 +33,6 @@ public class ClienteController {
 
 	@Autowired
 	private ClienteService clienteService;
-	/*
-	 * testar se os valores estão sendo passados para cada função
-	 */
 
 	/**
 	 * Método para salvar um novo cliente.
@@ -50,9 +45,6 @@ public class ClienteController {
 		Cliente clienteNovo = new Cliente(cliente.getNome(), cliente.getEmail(), cliente.getDataDeNascimento());
 
 		Cliente clienteSalvo = clienteService.salvar(clienteNovo);
-
-		URI location = ServletUriComponentsBuilder.fromCurrentRequest().path("/{id}").buildAndExpand(cliente.getId())
-				.toUri();
 
 		return new ResponseEntity<Cliente>(clienteSalvo,HttpStatus.CREATED);
 	}
@@ -98,16 +90,16 @@ public class ClienteController {
 	 */
 	@RequestMapping(value = "/cliente/{id}", method = RequestMethod.PUT)
 	public ResponseEntity<Cliente> alterarCliente(@PathVariable(value = "id") long id,
-			@Valid @RequestBody Cliente clienteAlter) {
+			@Valid @RequestBody Cliente clienteAlter) throws ClienteNaoEncontradoException {
 		ResponseEntity<Cliente> clienteExiste = clienteService.findById(id);
 		
-		if(clienteExiste.getStatusCode().equals(HttpStatus.NOT_FOUND)) {
-			return clienteExiste;
+		if(HttpStatus.NOT_FOUND.equals(clienteExiste.getStatusCode())) {
+			throw new ClienteNaoEncontradoException("Cliente com id ["+id+"] não encontrado!");
 		}
 		
 		Cliente cliente = clienteService.alterarCliente(clienteExiste.getBody(), clienteAlter);
 
-		return new ResponseEntity(cliente, HttpStatus.OK);
+		return new ResponseEntity<Cliente>(cliente, HttpStatus.OK);
 	}
 
 	/**
@@ -116,14 +108,11 @@ public class ClienteController {
 	 * @return 
 	 */
 	@RequestMapping(value = "/cliente/{id}", method = RequestMethod.DELETE)
-	public ResponseEntity<Object> removerCliente(@PathVariable(value = "id") long id) {
-		Response<Cliente> response = new Response<Cliente>();
-		
+	public ResponseEntity<Object> removerCliente(@PathVariable(value = "id") long id) throws ClienteNaoEncontradoException {
 		ResponseEntity<Cliente> clienteExiste = clienteService.findById(id);
 		
 		if(HttpStatus.NOT_FOUND.equals(clienteExiste.getStatusCode())) {
-			response.getErrors().add("Cliente com id ["+id+"] não encontrado!");
-			return ResponseEntity.badRequest().body(response);
+			throw new ClienteNaoEncontradoException("Cliente com id ["+id+"] não encontrado!");
 		}
 
 		return clienteService.removerCliente(id);
