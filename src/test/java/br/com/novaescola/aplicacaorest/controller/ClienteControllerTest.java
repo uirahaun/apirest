@@ -19,6 +19,8 @@ import io.restassured.http.ContentType;
  */
 public class ClienteControllerTest extends ApiRestApplicationTests {
 
+	private static final String FORMATO_DATA = "yyyy-MM-dd";
+
 	@Test
 	public void testBuscarListaClientesComPaginaELimite() throws Exception {
 		given()
@@ -49,7 +51,7 @@ public class ClienteControllerTest extends ApiRestApplicationTests {
 		final ClienteDTO clienteNovo = new ClienteDTO();
 		clienteNovo.setNome("Marilia Pereira");
 		clienteNovo.setEmail("marilia.pereira@email.com");
-		clienteNovo.setDataDeNascimento(DateUtils.parseDate("1953-05-11", "yyyy-MM-dd"));
+		clienteNovo.setDataDeNascimento(DateUtils.parseDate("1953-05-11", FORMATO_DATA));
 		
 		given()
 			.request()
